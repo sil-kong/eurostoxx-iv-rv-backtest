@@ -33,7 +33,7 @@ df_sx5e = yf.download(
     progress=False,
 )
 
-if df_sx5e.empty:
+if df_sx5e is None or len(df_sx5e) == 0:
     raise RuntimeError(
         f"Aucune donnée renvoyée par yfinance pour le ticker {TICKER_SX5E}."
     )
