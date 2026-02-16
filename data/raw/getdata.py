@@ -137,10 +137,20 @@ df_v2tx_work = df_v2tx_work.rename(
     }
 )
 
-df_v2tx_work = (
-    df_v2tx_work[["date", "vstoxx_close"]]
-    .dropna()
-    .sort_values("date")
+df_sx5e_work = (
+    df_sx5e_raw.rename(
+        columns={
+            "Date": "date",
+            "Open": "open",
+            "High": "high",
+            "Low": "low",
+            "Close": "close",
+            "Adj Close": "adj_close",
+            "Volume": "volume",
+        }
+    )
+    .dropna(subset=["close"])
+    .sort_values(by="date")
     .reset_index(drop=True)
 )
 
