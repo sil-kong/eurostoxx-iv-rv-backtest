@@ -48,9 +48,24 @@ htmlcov/
 # macOS
 .DS_Store
 
-# VSCode / JetBrains (si un jour tu les utilises)
+# VSCode / JetBrains
 .vscode/
 .idea/
+
+###############################
+# Clés / secrets
+###############################
+
+privatekey
+publickey
+*.pem
+*.key
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+.env
+.env.*
 
 ###############################
 # Spécifique au projet IV / RV
