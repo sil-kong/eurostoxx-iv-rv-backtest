@@ -34,9 +34,11 @@ The economic intuition is straightforward:
 
 The signal is built from the IV-RV spread and the backtest evaluates a stylized payoff of the form:
 
+$$
 \[
 \text{PnL}_t \propto \text{signal}_t \cdot \left(RV^{2}_{fwd,t} - IV_t^2\right)
 \]
+$$
 
 This should be interpreted as a signal-oriented approximation of variance trading, not as a full desk-level variance swap valuation framework.
 
@@ -68,12 +70,16 @@ Main fields used:
 
 The raw STOXX series is converted into:
 
+$$
 - `vstoxx_close`
 - `iv = vstoxx_close / 100`
+$$
 
 So for example:
 
+$$
 - `V2TX = 20.0` becomes `iv = 0.20`
+$$
 
 ---
 
@@ -120,18 +126,20 @@ The project is organized as a small research workflow, with:
 
 From spot prices \(S_t\), daily log-returns are computed as:
 
+$$
 \[
 r_t = \ln\left(\frac{S_t}{S_{t-1}}\right)
 \]
+$$
 
 These returns are the base input for realized volatility estimation.
 
 ### 2. Historical realized volatility
 
-For a rolling window \(w\) (typically 20d and 30d), realized volatility is computed as:
+For a rolling window $$\(w\)$$ (typically 20d and 30d), realized volatility is computed as:
 
 1. rolling standard deviation of log-returns,
-2. annualization using \(\sqrt{252}\).
+2. annualization using $$\(\sqrt{252}\)$$.
 
 This produces:
 
@@ -154,15 +162,19 @@ It is meant to proxy the realized volatility entering the forward-looking payoff
 
 A simple spread is defined as:
 
+$$
 \[
 \text{iv\_minus\_rv}_t = IV_t - RV_{20d,t}
 \]
+$$
 
 This spread is normalized through a rolling z-score:
 
+$$
 \[
 z_t = \frac{(IV_t - RV_{20d,t}) - \mu_t}{\sigma_t}
 \]
+$$
 
 with:
 
@@ -181,9 +193,11 @@ The trading rule is intentionally simple:
 
 The daily PnL is defined as:
 
+$$
 \[
 \text{PnL}_t = \text{signal}_t \cdot \left(RV^{2}_{fwd,t} - IV_t^2\right)
 \]
+$$
 
 with normalized notional equal to 1.
 
@@ -361,10 +375,11 @@ This project is intentionally simple in a few places.
 ### 1. Stylized variance payoff
 
 The backtest uses a payoff based on:
-
+$$
 \[
 RV_{fwd}^2 - IV^2
 \]
+$$
 
 This is useful to study the signal, but it is not a full product valuation framework.
 
