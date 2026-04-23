@@ -155,7 +155,9 @@ It is meant to proxy the realized volatility entering the forward-looking payoff
 A simple spread is defined as:
 
 $$
-\text{iv\_minus\_rv}_t = IV_t - RV_{20d,t}
+
+s_t = IV_t - RV_{20d,t}
+
 $$
 
 This spread is normalized through a rolling z-score:
