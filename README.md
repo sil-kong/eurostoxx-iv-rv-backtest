@@ -12,7 +12,7 @@ This project studies a simple volatility trading idea on Euro STOXX 50:
 - generate long / short volatility regimes,
 - evaluate the strategy through a stylized variance-based PnL.
 
-The repo is meant as a clean research pipeline rather than a production-ready trading engine.  
+The repo is meant as a clean research pipeline rather than a production-ready trading engine.
 The focus is on:
 
 - market data ingestion,
@@ -35,9 +35,7 @@ The economic intuition is straightforward:
 The signal is built from the IV-RV spread and the backtest evaluates a stylized payoff of the form:
 
 $$
-\[
 \text{PnL}_t \propto \text{signal}_t \cdot \left(RV^{2}_{fwd,t} - IV_t^2\right)
-\]
 $$
 
 This should be interpreted as a signal-oriented approximation of variance trading, not as a full desk-level variance swap valuation framework.
@@ -70,16 +68,12 @@ Main fields used:
 
 The raw STOXX series is converted into:
 
-$$
 - `vstoxx_close`
 - `iv = vstoxx_close / 100`
-$$
 
 So for example:
 
-$$
 - `V2TX = 20.0` becomes `iv = 0.20`
-$$
 
 ---
 
@@ -124,22 +118,20 @@ The project is organized as a small research workflow, with:
 
 ### 1. Log-returns
 
-From spot prices \(S_t\), daily log-returns are computed as:
+From spot prices $S_t$, daily log-returns are computed as:
 
 $$
-\[
 r_t = \ln\left(\frac{S_t}{S_{t-1}}\right)
-\]
 $$
 
 These returns are the base input for realized volatility estimation.
 
 ### 2. Historical realized volatility
 
-For a rolling window $$\(w\)$$ (typically 20d and 30d), realized volatility is computed as:
+For a rolling window $w$ (typically 20d and 30d), realized volatility is computed as:
 
 1. rolling standard deviation of log-returns,
-2. annualization using $$\(\sqrt{252}\)$$.
+2. annualization using $\sqrt{252}$.
 
 This produces:
 
@@ -155,7 +147,7 @@ The project also computes a forward realized volatility measure:
 - `rv_fwd_20d`
 - `rv_fwd_20d_pct`
 
-At date \(t\), this uses future returns over the interval \([t+1, t+20]\).  
+At date $t$, this uses future returns over the interval $[t+1, t+20]$.
 It is meant to proxy the realized volatility entering the forward-looking payoff.
 
 ### 4. IV-RV spread and z-score
@@ -163,23 +155,19 @@ It is meant to proxy the realized volatility entering the forward-looking payoff
 A simple spread is defined as:
 
 $$
-\[
 \text{iv\_minus\_rv}_t = IV_t - RV_{20d,t}
-\]
 $$
 
 This spread is normalized through a rolling z-score:
 
 $$
-\[
 z_t = \frac{(IV_t - RV_{20d,t}) - \mu_t}{\sigma_t}
-\]
 $$
 
 with:
 
 - rolling lookback = 252 days,
-- default threshold = 0.5
+- default threshold = 0.5.
 
 ### 5. Trading signal
 
@@ -194,9 +182,7 @@ The trading rule is intentionally simple:
 The daily PnL is defined as:
 
 $$
-\[
 \text{PnL}_t = \text{signal}_t \cdot \left(RV^{2}_{fwd,t} - IV_t^2\right)
-\]
 $$
 
 with normalized notional equal to 1.
@@ -333,7 +319,7 @@ PnL short vol : 13.843
 ### Basic interpretation
 
 - The strategy delivers a positive cumulative PnL over the sample.
-- The Sharpe ratio (~0.75) is reasonable for a simple signal-based volatility strategy.
+- The Sharpe ratio (~0.75) is a useful summary statistic for this stylized signal-based framework, but should not be over-interpreted as a production trading Sharpe.
 - Most of the performance comes from the short-vol leg, which is consistent with the standard variance risk premium intuition: implied volatility tends to trade above realized volatility on average.
 - The long-vol leg is negative over the full sample, but still captures stressed periods and crisis-type volatility moves.
 
@@ -375,10 +361,9 @@ This project is intentionally simple in a few places.
 ### 1. Stylized variance payoff
 
 The backtest uses a payoff based on:
+
 $$
-\[
 RV_{fwd}^2 - IV^2
-\]
 $$
 
 This is useful to study the signal, but it is not a full product valuation framework.
@@ -463,3 +448,4 @@ This project is best read as:
 - a structured IV vs RV research pipeline,
 - a stylized long / short volatility backtest,
 - and a solid stepping stone toward more realistic volatility trading models.
+
