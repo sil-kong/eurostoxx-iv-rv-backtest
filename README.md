@@ -238,7 +238,7 @@ python -m pip install -e ".[dev]"
 ### 1. Download and clean market data
 
 ```bash
-python data/raw/getdata.py
+python -m eurostoxx_iv_rv_backtest.scripts.getdata
 ```
 
 This script:

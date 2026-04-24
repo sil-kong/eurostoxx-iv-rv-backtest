@@ -25,6 +25,7 @@ dev = [
 ]
 
 [project.scripts]
+eurostoxx-build-raw-data = "eurostoxx_iv_rv_backtest.scripts.getdata:main"
 eurostoxx-build-rv = "eurostoxx_iv_rv_backtest.scripts.build_rv:main"
 eurostoxx-build-signals = "eurostoxx_iv_rv_backtest.scripts.build_signals:main"
 eurostoxx-run-varswap-backtest = "eurostoxx_iv_rv_backtest.scripts.run_backtest_iv_rv:main"
