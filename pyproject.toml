@@ -33,6 +33,7 @@ eurostoxx-run-non-overlap-varswap = "eurostoxx_iv_rv_backtest.scripts.run_non_ov
 eurostoxx-analyze-backtest = "eurostoxx_iv_rv_backtest.scripts.analyze_backtest:main"
 eurostoxx-run-robustness = "eurostoxx_iv_rv_backtest.scripts.run_robustness:main"
 eurostoxx-run-diagnostics = "eurostoxx_iv_rv_backtest.scripts.run_diagnostics:main"
+eurostoxx-generate-figures = "eurostoxx_iv_rv_backtest.scripts.generate_figures:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

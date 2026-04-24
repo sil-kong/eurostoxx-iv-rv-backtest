@@ -78,3 +78,6 @@ data/raw/h_v2tx.txt
 # Fichiers de sortie (backtests, features, graphes…)
 outputs/*
 !outputs/.gitkeep
+!outputs/figures/
+outputs/figures/*
+!outputs/figures/.gitkeep
