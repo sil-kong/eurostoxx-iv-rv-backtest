@@ -97,6 +97,11 @@ So for example:
         │   ├── __init__.py
         │   ├── realized_vol.py
         │   └── iv_rv_variance_swap.py
+        ├── options
+        │   ├── __init__.py
+        │   ├── black_scholes.py
+        │   ├── payoffs.py
+        │   └── straddle.py
         └── scripts
             ├── build_rv.py
             ├── build_signals.py
@@ -150,6 +155,18 @@ The project also computes a forward realized volatility measure:
 At date $t$, this uses future returns over the interval $[t+1, t+20]$.
 It is meant to proxy the realized volatility entering the forward-looking payoff.
 
+### No-look-ahead policy
+
+The time convention is explicit:
+
+- at date \(t\), the signal uses only fields available at \(t\),
+- `rv_20d_t` may use log-returns up to and including \(t\), because it is observable after the close,
+- `rv_fwd_20d_t` uses strictly future returns \(t+1\) to \(t+20\),
+- `rv_fwd_20d_t` is reserved for ex-post payoff evaluation,
+- `signal_vol_t` must not use `rv_fwd_20d_t`.
+
+Unit tests cover this convention directly, including a deterministic forward-RV example where the current return is deliberately different from the future returns.
+
 ### 4. IV-RV spread and z-score
 
 A simple spread is defined as:
@@ -193,6 +210,18 @@ The cumulative PnL is stored as:
 - `equity_varswap`
 
 This is a stylized payoff useful to evaluate the signal, but not a full mark-to-market implementation of a live variance swap book.
+
+### 7. Options pricing extension
+
+The repo also includes a small option-pricing utility layer:
+
+- European Black-Scholes call and put prices,
+- call and put delta, gamma, vega and annual theta,
+- implied volatility inversion by robust bisection,
+- call, put and straddle expiry payoffs,
+- a simplified ATM straddle expiry PnL helper.
+
+This extension is intentionally educational. It links the IV/RV research idea to option pricing and option payoff mechanics, but it does not build a real options book or calibrate an options surface.
 
 ---
 
@@ -294,6 +323,14 @@ env PYTHONPATH=src .venv/bin/python src/eurostoxx_iv_rv_backtest/scripts/animate
 env PYTHONPATH=src .venv/bin/python src/eurostoxx_iv_rv_backtest/scripts/analyze_backtest.py
 ```
 
+### 8. Run tests
+
+```bash
+.venv/bin/python -m pytest
+```
+
+The tests are configured through `pytest.ini`, so running from the project root is enough.
+
 ---
 
 ## Current results
@@ -303,25 +340,27 @@ Current backtest summary:
 ```text
 === Résumé backtest IV vs RV (variance swap) ===
 
-Total PnL       : 7.757
-Annualisé (moy) : 0.4132
-Annualisé (vol) : 0.5536
+Total PnL       : 8.222
+Annualisé (moy) : 0.4379
+Annualisé (vol) : 0.5812
 Sharpe approx   : 0.75
-Max drawdown    : -4.879
+Max drawdown    : -4.784
 
 Nb jours       : 4731
 Nb jours en position : 2227 (47.1 %)
 
-PnL long vol  : -6.086
-PnL short vol : 13.843
+PnL long vol  : -5.993
+PnL short vol : 14.214
 ```
 
 ### Basic interpretation
 
-- The strategy delivers a positive cumulative PnL over the sample.
-- The Sharpe ratio (~0.75) is a useful summary statistic for this stylized signal-based framework, but should not be over-interpreted as a production trading Sharpe.
+### Basic interpretation
+
+- In the current sample and with the current stylized assumptions, the strategy delivers a positive cumulative normalized payoff.
+- The Sharpe ratio (~0.75) is a descriptive statistic for this simplified payoff, not a live trading performance claim.
 - Most of the performance comes from the short-vol leg, which is consistent with the standard variance risk premium intuition: implied volatility tends to trade above realized volatility on average.
-- The long-vol leg is negative over the full sample, but still captures stressed periods and crisis-type volatility moves.
+- The long-vol leg is negative over the full sample in this run, while still acting differently during stressed volatility regimes.
 
 ### About the equity curve
 
@@ -354,9 +393,18 @@ What this repo already does reasonably well:
 
 ---
 
-## Limitations
+## What this project is not
 
-This project is intentionally simple in a few places.
+This project is intentionally simple. It is not:
+
+- a production trading engine,
+- a real options surface or calibration framework,
+- an options-chain backtest with bid/ask quotes,
+- an order-book or execution simulator,
+- a transaction-cost-aware portfolio engine,
+- a live variance-swap book or desk-level PnL system.
+
+## Limitations
 
 ### 1. Stylized variance payoff
 
@@ -392,6 +440,17 @@ IV is proxied through VSTOXX only:
 - no strike dimension,
 - no expiry structure,
 - no options chain calibration.
+
+### 5. Stylized option payoff layer
+
+The option extension uses Black-Scholes and simple expiry payoffs. The ATM straddle helper uses `strike = spot_t` and a Black-Scholes initial cost, then compares that cost with the expiry intrinsic payoff. It ignores:
+
+- bid/ask spreads,
+- dividends beyond an optional continuous yield parameter,
+- financing and margin,
+- volatility surface dynamics,
+- option-chain availability,
+- early unwind and mark-to-market.
 
 ---
 
@@ -448,4 +507,3 @@ This project is best read as:
 - a structured IV vs RV research pipeline,
 - a stylized long / short volatility backtest,
 - and a solid stepping stone toward more realistic volatility trading models.
-
