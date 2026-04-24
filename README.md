@@ -59,7 +59,7 @@ $$
 Historical realized volatility over a window \(w\) is:
 
 $$
-RV_{w,t} = \operatorname{std}(r_{t-w+1}, \dots, r_t) \sqrt{252}
+RV_{w,t} = \mathrm{std}(r_{t-w+1}, \ldots, r_t)\sqrt{252}
 $$
 
 The signal uses the IV/RV spread:
