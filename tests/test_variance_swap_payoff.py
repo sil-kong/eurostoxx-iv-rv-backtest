@@ -88,3 +88,23 @@ def test_backtest_variance_swap_equity_is_cumulative_pnl() -> None:
         result["pnl_varswap"].cumsum(),
         check_names=False,
     )
+
+
+def test_backtest_variance_swap_applies_simple_signal_change_cost() -> None:
+    df = pd.DataFrame(
+        {
+            "iv": [0.20, 0.20, 0.20, 0.20],
+            "rv_fwd_20d": [0.30, 0.30, 0.30, 0.30],
+            "signal_vol": [0, 1, 1, -1],
+        }
+    )
+
+    result = backtest_iv_rv_variance_swap(df, cost_per_signal_change=0.01)
+
+    gross_spread = 0.30**2 - 0.20**2
+    assert result.loc[0, "transaction_cost_varswap"] == 0.0
+    assert result.loc[1, "transaction_cost_varswap"] == 0.01
+    assert result.loc[2, "transaction_cost_varswap"] == 0.0
+    assert result.loc[3, "transaction_cost_varswap"] == 0.01
+    assert np.isclose(result.loc[1, "pnl_varswap"], gross_spread - 0.01)
+    assert np.isclose(result.loc[3, "pnl_varswap"], -gross_spread - 0.01)
