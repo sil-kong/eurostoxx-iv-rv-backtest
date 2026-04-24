@@ -53,6 +53,25 @@ def test_backtest_variance_swap_missing_iv_or_forward_rv_produces_zero_pnl() -> 
     assert np.isclose(result.loc[2, "pnl_varswap"], 0.30**2 - 0.20**2)
 
 
+def test_backtest_variance_swap_uses_forward_rv_as_ex_post_payoff_input() -> None:
+    df_low_realized = pd.DataFrame(
+        {
+            "iv": [0.20],
+            "rv_fwd_20d": [0.10],
+            "signal_vol": [1],
+        }
+    )
+    df_high_realized = df_low_realized.copy()
+    df_high_realized["rv_fwd_20d"] = [0.30]
+
+    low_result = backtest_iv_rv_variance_swap(df_low_realized)
+    high_result = backtest_iv_rv_variance_swap(df_high_realized)
+
+    assert np.isclose(low_result.loc[0, "pnl_varswap"], 0.10**2 - 0.20**2)
+    assert np.isclose(high_result.loc[0, "pnl_varswap"], 0.30**2 - 0.20**2)
+    assert high_result.loc[0, "pnl_varswap"] > low_result.loc[0, "pnl_varswap"]
+
+
 def test_backtest_variance_swap_equity_is_cumulative_pnl() -> None:
     df = pd.DataFrame(
         {
