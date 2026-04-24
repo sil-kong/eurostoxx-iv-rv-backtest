@@ -12,14 +12,30 @@ def add_realized_vol(
     windows: Sequence[int] = (20, 30),
     trading_days_per_year: int = 252,
 ) -> pd.DataFrame:
+    """
+    Add historical realized volatility columns from daily close prices.
+
+    Log-return convention:
+        log_ret_t = log(S_t / S_{t-1})
+
+    At date t, ``rv_{w}d`` is the annualized rolling standard deviation of the
+    latest ``w`` log-returns ending at t. It is therefore observable after the
+    close at t and can be used by same-date signal construction in this
+    stylized research pipeline.
+    """
     df = df.copy()
 
     if price_col not in df.columns:
         raise ValueError(f"Colonne '{price_col}' absente du DataFrame.")
+    if trading_days_per_year <= 0:
+        raise ValueError("trading_days_per_year doit être strictement positif.")
 
     df["log_ret"] = np.log(df[price_col] / df[price_col].shift(1))
 
     for w in windows:
+        if w <= 0:
+            raise ValueError("Les fenêtres de RV doivent être strictement positives.")
+
         col_rv = f"rv_{w}d"
         col_rv_pct = f"rv_{w}d_pct"
 
@@ -37,23 +53,36 @@ def add_forward_realized_vol(
     trading_days_per_year: int = 252,
 ) -> pd.DataFrame:
     """
-    Ajoute une vol réalisée *future* sur 'window' jours :
-    à la date t, rv_fwd est calculée sur les rendements t+1 ... t+window.
+    Add ex-post forward realized volatility over strictly future returns.
 
-    Utile comme RV dans un payoff type variance swap
-    (on connaît IV_t, et RV_fwd(t) est la réalisation future).
+    Log-return convention:
+        log_ret_t = log(S_t / S_{t-1})
+
+    At index i, corresponding to date t, ``rv_fwd_{window}d`` is computed from:
+        log_ret.iloc[i + 1 : i + 1 + window]
+
+    Example with ``window=3``:
+        rv_fwd_3d at date t uses returns from t+1, t+2 and t+3.
+        It does not use log_ret_t.
+
+    This column is for ex-post payoff evaluation only. It must not be used as
+    an input to same-date signal construction.
     """
     df = df.copy()
 
     if price_col not in df.columns:
         raise ValueError(f"Colonne '{price_col}' absente du DataFrame.")
+    if window <= 0:
+        raise ValueError("window doit être strictement positif.")
+    if trading_days_per_year <= 0:
+        raise ValueError("trading_days_per_year doit être strictement positif.")
 
     log_ret = np.log(df[price_col] / df[price_col].shift(1))
 
-    # On veut une fenêtre "forward": tu peux simplement décaler la série
-    rolling_std_fwd = (
-        log_ret[::-1].rolling(window).std()[::-1]
-    )  # reverse / rolling / reverse trick
+    # Explicit no-look-ahead convention:
+    # rolling std ending at i+window, shifted back by window rows, so the value
+    # stored at i uses log_ret[i+1] ... log_ret[i+window].
+    rolling_std_fwd = log_ret.rolling(window).std().shift(-window)
 
     rv_fwd = rolling_std_fwd * np.sqrt(trading_days_per_year)
     df[f"rv_fwd_{window}d"] = rv_fwd
