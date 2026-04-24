@@ -21,6 +21,19 @@ def test_compute_drawdown_returns_absolute_underwater_curve() -> None:
     )
 
 
+def test_compute_drawdown_can_start_from_explicit_zero_baseline() -> None:
+    pnl = pd.Series([-0.5, 0.25])
+    equity = pnl.cumsum()
+
+    drawdown = compute_drawdown(equity, initial_equity=0.0)
+
+    assert drawdown.min() == -0.5
+    pd.testing.assert_series_equal(
+        drawdown,
+        pd.Series([-0.5, -0.25]),
+    )
+
+
 def test_compute_summary_stats_aggregates_pnl_signal_and_drawdown() -> None:
     pnl = pd.Series([1.0, -0.5, 0.25, 0.0])
     equity = pnl.cumsum()
@@ -69,7 +82,7 @@ def test_compute_yearly_stats_resets_equity_by_calendar_year() -> None:
     by_year = result.set_index("year")
     assert by_year.loc[2023, "total_pnl"] == 1.0
     assert by_year.loc[2024, "total_pnl"] == -0.25
-    assert by_year.loc[2024, "max_drawdown"] == 0.0
+    assert by_year.loc[2024, "max_drawdown"] == -0.5
 
 
 def test_compute_worst_drawdown_periods_returns_largest_periods() -> None:

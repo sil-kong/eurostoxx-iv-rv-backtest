@@ -55,6 +55,35 @@ def test_clean_vstoxx_data_adds_decimal_iv() -> None:
     assert clean.loc[1, "vstoxx_close"] == 18.0
 
 
+def test_clean_vstoxx_data_filters_explicitly_to_v2tx_symbol() -> None:
+    raw = pd.DataFrame(
+        {
+            "Date": ["02.01.2024", "02.01.2024", "03.01.2024"],
+            "Symbol": ["V2TX", "OTHER", "V2TX"],
+            "Indexvalue": [20.0, 99.0, 18.0],
+        }
+    )
+
+    clean = clean_vstoxx_data(raw)
+
+    assert clean["Symbol"].eq("V2TX").all()
+    assert clean["vstoxx_close"].tolist() == [20.0, 18.0]
+    assert clean["iv"].tolist() == [0.20, 0.18]
+
+
+def test_clean_vstoxx_data_rejects_files_without_v2tx_symbol() -> None:
+    raw = pd.DataFrame(
+        {
+            "Date": ["02.01.2024"],
+            "Symbol": ["OTHER"],
+            "Indexvalue": [99.0],
+        }
+    )
+
+    with pytest.raises(RuntimeError, match="Aucune ligne V2TX"):
+        clean_vstoxx_data(raw)
+
+
 def test_merge_spot_and_iv_left_joins_and_checks_missing_ratio() -> None:
     sx5e = pd.DataFrame(
         {

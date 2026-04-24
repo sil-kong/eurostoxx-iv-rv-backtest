@@ -4,10 +4,26 @@ import numpy as np
 import pandas as pd
 
 
-def compute_drawdown(equity: pd.Series) -> pd.Series:
-    """Return absolute drawdown from the running maximum of an equity curve."""
+def compute_drawdown(
+    equity: pd.Series,
+    initial_equity: float | None = None,
+) -> pd.Series:
+    """
+    Return absolute drawdown from the running maximum of an equity curve.
+
+    If ``initial_equity`` is provided, it is prepended internally before the
+    running maximum is computed. The returned series remains aligned with the
+    original ``equity`` index. This is important for yearly or sliced diagnostics
+    whose local equity curve should start from an explicit zero baseline.
+    """
     equity_float = equity.astype(float)
-    return equity_float - equity_float.cummax()
+    if initial_equity is None:
+        return equity_float - equity_float.cummax()
+
+    baseline = pd.Series([float(initial_equity)])
+    combined = pd.concat([baseline, equity_float.reset_index(drop=True)], ignore_index=True)
+    running_max = combined.cummax().iloc[1:].to_numpy()
+    return pd.Series(equity_float.to_numpy() - running_max, index=equity.index)
 
 
 def compute_summary_stats(
@@ -15,6 +31,7 @@ def compute_summary_stats(
     equity: pd.Series,
     signal: pd.Series,
     trading_days_per_year: int = 252,
+    initial_equity: float | None = 0.0,
 ) -> dict[str, float]:
     """
     Compute summary statistics for the stylized daily IV/RV payoff.
@@ -58,7 +75,7 @@ def compute_summary_stats(
         "annualized_mean": annualized_mean,
         "annualized_vol": annualized_vol,
         "sharpe": sharpe,
-        "max_drawdown": float(compute_drawdown(df["equity"]).min()),
+        "max_drawdown": float(compute_drawdown(df["equity"], initial_equity).min()),
         "nb_days": float(nb_days),
         "days_in_position": float(days_in_position),
         "pct_in_market": 100.0 * days_in_position / nb_days,
@@ -108,7 +125,13 @@ def compute_yearly_stats(
     for year, group in work.groupby("year"):
         pnl = group[pnl_col]
         equity = pnl.cumsum()
-        stats = compute_summary_stats(pnl, equity, group[signal_col], trading_days_per_year)
+        stats = compute_summary_stats(
+            pnl,
+            equity,
+            group[signal_col],
+            trading_days_per_year=trading_days_per_year,
+            initial_equity=0.0,
+        )
         rows.append(
             {
                 "year": int(year),

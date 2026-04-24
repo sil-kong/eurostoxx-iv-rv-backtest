@@ -135,7 +135,10 @@ def clean_vstoxx_data(df_raw: pd.DataFrame) -> pd.DataFrame:
     expected_cols = {"Date", "Symbol", "Indexvalue"}
     _require_columns(df_raw, expected_cols, "VSTOXX raw")
 
-    df = df_raw.copy()
+    df = df_raw.loc[df_raw["Symbol"].eq("V2TX")].copy()
+    if df.empty:
+        raise RuntimeError("Aucune ligne V2TX trouvée dans le fichier VSTOXX.")
+
     df["Date"] = pd.to_datetime(df["Date"], dayfirst=True)
     df = df.rename(columns={"Date": "date", "Indexvalue": "vstoxx_close"})
     df["iv"] = df["vstoxx_close"] / 100.0

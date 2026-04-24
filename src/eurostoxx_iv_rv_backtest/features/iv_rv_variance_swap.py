@@ -21,9 +21,9 @@ def backtest_iv_rv_variance_swap(
         - IV_t and RV_fwd_t are annualized decimal volatilities, e.g. 0.20.
         - signal_t is -1 / 0 / +1 for short / flat / long volatility.
         - Missing IV or forward RV produces zero PnL for that row.
-        - ``cost_per_signal_change`` is a simplified friction deducted when the
-          signal exposure changes. It defaults to 0 and is not an execution
-          model.
+        - ``cost_per_signal_change`` is a simplified friction charged per unit
+          of absolute signal change on rows where IV and forward RV are
+          available. It defaults to 0 and is not an execution model.
 
     This is a normalized, fee-free, hold-to-expiry-style diagnostic payoff. It
     has no mark-to-market dynamics, no maturity term structure, no transaction
@@ -57,8 +57,9 @@ def backtest_iv_rv_variance_swap(
 
     transaction_cost = pd.Series(0.0, index=df.index)
     if cost_per_signal_change > 0:
-        signal_change = signal.ne(signal.shift(1).fillna(0.0))
-        transaction_cost.loc[signal_change] = cost_per_signal_change
+        previous_signal = signal.shift(1).fillna(0.0)
+        signal_delta = (signal - previous_signal).abs()
+        transaction_cost.loc[mask] = cost_per_signal_change * signal_delta.loc[mask]
         pnl = pnl - transaction_cost
 
     df["transaction_cost_varswap"] = transaction_cost

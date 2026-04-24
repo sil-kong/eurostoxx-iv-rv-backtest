@@ -124,7 +124,9 @@ with future realized variance. It is not a realistic daily mark-to-market of a
 live product.
 
 A simplified `cost_per_signal_change` parameter is available for sensitivity
-checks. It is a placeholder friction model, not an execution simulator.
+checks. It is charged per unit of absolute signal change, e.g. `0 -> +1` costs
+one unit and `+1 -> -1` costs two units, only on rows with valid IV and forward
+RV. It is a placeholder friction model, not a bid/ask or execution simulator.
 
 ### 2. Non-Overlapping 20-Day Stylized Variance Trade
 

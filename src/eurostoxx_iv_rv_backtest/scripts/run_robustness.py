@@ -31,6 +31,7 @@ def main() -> None:
 
     print(f"Robustness grid exported to: {grid_path}")
     print(f"Robustness heatmap exported to: {figure_path}")
+    print("\nTop rows by Sharpe, for diagnostic inspection only, not parameter selection:")
     print(grid.sort_values("sharpe", ascending=False).head(10))
 
 

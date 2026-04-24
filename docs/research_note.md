@@ -79,6 +79,10 @@ Both layers are normalized stylized payoffs. They do not model transaction
 costs, bid/ask spreads, margin, funding, daily mark-to-market or true variance
 swap replication.
 
+The daily diagnostic layer includes an optional simplified friction parameter
+charged per unit of absolute signal change. This is only a sensitivity check; it
+is not a bid/ask, slippage or execution model.
+
 ## 6. No-Look-Ahead Convention
 
 The project enforces the following time convention:

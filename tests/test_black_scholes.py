@@ -52,6 +52,14 @@ def test_black_scholes_greeks_are_reasonable() -> None:
     assert theta < 0.0
 
 
+def test_black_scholes_delta_bounds_are_option_consistent() -> None:
+    delta_call = black_scholes_delta(100.0, 105.0, 0.5, 0.02, 0.25, "call")
+    delta_put = black_scholes_delta(100.0, 105.0, 0.5, 0.02, 0.25, "put")
+
+    assert 0.0 < delta_call < 1.0
+    assert -1.0 < delta_put < 0.0
+
+
 def test_black_scholes_rejects_invalid_inputs() -> None:
     with pytest.raises(ValueError, match="option_type"):
         black_scholes_price(100.0, 100.0, 1.0, 0.05, 0.20, "digital")

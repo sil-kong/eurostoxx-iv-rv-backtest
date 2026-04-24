@@ -105,6 +105,37 @@ def test_backtest_variance_swap_applies_simple_signal_change_cost() -> None:
     assert result.loc[0, "transaction_cost_varswap"] == 0.0
     assert result.loc[1, "transaction_cost_varswap"] == 0.01
     assert result.loc[2, "transaction_cost_varswap"] == 0.0
-    assert result.loc[3, "transaction_cost_varswap"] == 0.01
+    assert result.loc[3, "transaction_cost_varswap"] == 0.02
     assert np.isclose(result.loc[1, "pnl_varswap"], gross_spread - 0.01)
-    assert np.isclose(result.loc[3, "pnl_varswap"], -gross_spread - 0.01)
+    assert np.isclose(result.loc[3, "pnl_varswap"], -gross_spread - 0.02)
+
+
+def test_backtest_variance_swap_zero_cost_parameter_keeps_costs_at_zero() -> None:
+    df = pd.DataFrame(
+        {
+            "iv": [0.20, 0.20],
+            "rv_fwd_20d": [0.30, 0.30],
+            "signal_vol": [1, -1],
+        }
+    )
+
+    result = backtest_iv_rv_variance_swap(df, cost_per_signal_change=0.0)
+
+    assert (result["transaction_cost_varswap"] == 0.0).all()
+    assert np.isclose(result.loc[0, "pnl_varswap"], 0.30**2 - 0.20**2)
+    assert np.isclose(result.loc[1, "pnl_varswap"], -(0.30**2 - 0.20**2))
+
+
+def test_backtest_variance_swap_does_not_charge_costs_on_invalid_rows() -> None:
+    df = pd.DataFrame(
+        {
+            "iv": [0.20, np.nan, 0.20],
+            "rv_fwd_20d": [0.30, 0.30, np.nan],
+            "signal_vol": [0, 1, -1],
+        }
+    )
+
+    result = backtest_iv_rv_variance_swap(df, cost_per_signal_change=0.01)
+
+    assert (result["transaction_cost_varswap"] == 0.0).all()
+    assert (result["pnl_varswap"] == 0.0).all()
