@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eurostoxx-iv-rv-backtest"
+version = "0.1.0"
+description = "Euro STOXX 50 implied-vs-realized volatility research pipeline with stylized variance payoff diagnostics."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Sil Kong" }]
+dependencies = [
+    "numpy",
+    "pandas",
+    "matplotlib",
+    "requests",
+    "yfinance",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+]
+
+[project.scripts]
+eurostoxx-build-rv = "eurostoxx_iv_rv_backtest.scripts.build_rv:main"
+eurostoxx-build-signals = "eurostoxx_iv_rv_backtest.scripts.build_signals:main"
+eurostoxx-run-varswap-backtest = "eurostoxx_iv_rv_backtest.scripts.run_backtest_iv_rv:main"
+eurostoxx-analyze-backtest = "eurostoxx_iv_rv_backtest.scripts.analyze_backtest:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]

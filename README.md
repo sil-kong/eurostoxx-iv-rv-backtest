@@ -229,10 +229,16 @@ This extension is intentionally educational. It links the IV/RV research idea to
 
 Run all scripts from the project root.
 
+Install the package in editable mode first:
+
+```bash
+python -m pip install -e ".[dev]"
+```
+
 ### 1. Download and clean market data
 
 ```bash
-env PYTHONPATH=src .venv/bin/python data/raw/getdata.py
+python data/raw/getdata.py
 ```
 
 This script:
@@ -250,7 +256,7 @@ data/raw/SXE50_with_IV_daily_20y.csv
 ### 2. Build realized volatility features
 
 ```bash
-env PYTHONPATH=src .venv/bin/python src/eurostoxx_iv_rv_backtest/scripts/build_rv.py
+python -m eurostoxx_iv_rv_backtest.scripts.build_rv
 ```
 
 This creates:
@@ -264,7 +270,7 @@ with historical realized vol measures.
 ### 3. Build forward RV and signals
 
 ```bash
-env PYTHONPATH=src .venv/bin/python src/eurostoxx_iv_rv_backtest/scripts/build_signals.py
+python -m eurostoxx_iv_rv_backtest.scripts.build_signals
 ```
 
 This creates:
@@ -283,7 +289,7 @@ with:
 ### 4. Run the backtest
 
 ```bash
-env PYTHONPATH=src .venv/bin/python src/eurostoxx_iv_rv_backtest/scripts/run_backtest_iv_rv.py
+python -m eurostoxx_iv_rv_backtest.scripts.run_backtest_iv_rv
 ```
 
 This creates:
@@ -300,7 +306,7 @@ with:
 ### 5. Visualize IV vs RV
 
 ```bash
-env PYTHONPATH=src .venv/bin/python src/eurostoxx_iv_rv_backtest/scripts/animate_iv_rv.py
+python -m eurostoxx_iv_rv_backtest.scripts.animate_iv_rv
 ```
 
 This animation shows:
@@ -314,19 +320,19 @@ This animation shows:
 ### 6. Visualize the equity curve
 
 ```bash
-env PYTHONPATH=src .venv/bin/python src/eurostoxx_iv_rv_backtest/scripts/animate_equity.py
+python -m eurostoxx_iv_rv_backtest.scripts.animate_equity
 ```
 
 ### 7. Print backtest summary statistics
 
 ```bash
-env PYTHONPATH=src .venv/bin/python src/eurostoxx_iv_rv_backtest/scripts/analyze_backtest.py
+python -m eurostoxx_iv_rv_backtest.scripts.analyze_backtest
 ```
 
 ### 8. Run tests
 
 ```bash
-.venv/bin/python -m pytest
+python -m pytest
 ```
 
 The tests are configured through `pytest.ini`, so running from the project root is enough.
