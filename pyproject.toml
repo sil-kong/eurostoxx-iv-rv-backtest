@@ -31,6 +31,7 @@ eurostoxx-build-signals = "eurostoxx_iv_rv_backtest.scripts.build_signals:main"
 eurostoxx-run-varswap-backtest = "eurostoxx_iv_rv_backtest.scripts.run_backtest_iv_rv:main"
 eurostoxx-run-non-overlap-varswap = "eurostoxx_iv_rv_backtest.scripts.run_non_overlapping_varswap:main"
 eurostoxx-analyze-backtest = "eurostoxx_iv_rv_backtest.scripts.analyze_backtest:main"
+eurostoxx-run-robustness = "eurostoxx_iv_rv_backtest.scripts.run_robustness:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
