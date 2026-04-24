@@ -6,6 +6,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from eurostoxx_iv_rv_backtest.analytics.performance import compute_drawdown
+
 _MPLCONFIGDIR = Path(tempfile.gettempdir()) / "eurostoxx_iv_rv_mpl"
 _MPLCONFIGDIR.mkdir(parents=True, exist_ok=True)
 os.environ.setdefault("MPLCONFIGDIR", str(_MPLCONFIGDIR))
@@ -16,9 +18,6 @@ os.environ.setdefault("XDG_CACHE_HOME", str(_XDG_CACHE_HOME))
 import matplotlib  # noqa: E402
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
-
-from eurostoxx_iv_rv_backtest.analytics.performance import compute_drawdown
-from eurostoxx_iv_rv_backtest.analytics.robustness import plot_robustness_heatmap
 
 
 def plot_iv_vs_rv(df: pd.DataFrame, output_path: Path) -> None:
@@ -95,6 +94,8 @@ def plot_yearly_pnl(yearly: pd.DataFrame, output_path: Path) -> None:
 
 def plot_robustness(grid: pd.DataFrame, output_path: Path) -> None:
     """Plot the robustness Sharpe heatmap panels."""
+    from eurostoxx_iv_rv_backtest.analytics.robustness import plot_robustness_heatmap
+
     plot_robustness_heatmap(grid, output_path, metric="sharpe")
 
 

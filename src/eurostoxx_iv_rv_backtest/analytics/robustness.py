@@ -8,6 +8,16 @@ from typing import Sequence
 import numpy as np
 import pandas as pd
 
+from eurostoxx_iv_rv_backtest.analytics.performance import compute_summary_stats
+from eurostoxx_iv_rv_backtest.features.iv_rv_variance_swap import (
+    backtest_iv_rv_variance_swap,
+)
+from eurostoxx_iv_rv_backtest.features.realized_vol import (
+    add_forward_realized_vol,
+    add_realized_vol,
+)
+from eurostoxx_iv_rv_backtest.scripts.build_signals import add_iv_rv_signal
+
 _MPLCONFIGDIR = Path(tempfile.gettempdir()) / "eurostoxx_iv_rv_mpl"
 _MPLCONFIGDIR.mkdir(parents=True, exist_ok=True)
 os.environ.setdefault("MPLCONFIGDIR", str(_MPLCONFIGDIR))
@@ -18,16 +28,6 @@ os.environ.setdefault("XDG_CACHE_HOME", str(_XDG_CACHE_HOME))
 import matplotlib  # noqa: E402
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
-
-from eurostoxx_iv_rv_backtest.analytics.performance import compute_summary_stats
-from eurostoxx_iv_rv_backtest.features.iv_rv_variance_swap import (
-    backtest_iv_rv_variance_swap,
-)
-from eurostoxx_iv_rv_backtest.features.realized_vol import (
-    add_forward_realized_vol,
-    add_realized_vol,
-)
-from eurostoxx_iv_rv_backtest.scripts.build_signals import add_iv_rv_signal
 
 
 def run_robustness_grid(
