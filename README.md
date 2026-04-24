@@ -352,9 +352,6 @@ Nb jours en position : 2227 (47.1 %)
 PnL long vol  : -5.993
 PnL short vol : 14.214
 ```
-
-### Basic interpretation
-
 ### Basic interpretation
 
 - In the current sample and with the current stylized assumptions, the strategy delivers a positive cumulative normalized payoff.
