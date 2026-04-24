@@ -11,13 +11,21 @@ def backtest_iv_rv_variance_swap(
     notional: float = 1.0,
 ) -> pd.DataFrame:
     """
-    Backtest jouet type variance swap sur IV vs RV forward.
+    Compute a stylized IV/RV variance-swap diagnostic payoff.
 
-    PnL_t ≈ notional * signal_t * (RV_fwd_t^2 - IV_t^2)
+    Formula:
+        PnL_t = notional * signal_t * (RV_fwd_t^2 - IV_t^2)
 
-    - IV_t       : volatilité implicite (décimal, ex: 0.20)
-    - RV_fwd_t   : volatilité réalisée future sur 20 jours (décimal)
-    - signal_t   : -1 / 0 / +1 (short / flat / long vol)
+    Conventions:
+        - IV_t and RV_fwd_t are annualized decimal volatilities, e.g. 0.20.
+        - signal_t is -1 / 0 / +1 for short / flat / long volatility.
+        - Missing IV or forward RV produces zero PnL for that row.
+
+    This is a normalized, fee-free, hold-to-expiry-style diagnostic payoff. It
+    has no mark-to-market dynamics, no maturity term structure, no transaction
+    costs and no desk-level variance-swap replication. It is useful for testing
+    whether the signal is aligned with subsequent realized variance, not for
+    claiming tradable PnL.
     """
 
     df = df.copy()
