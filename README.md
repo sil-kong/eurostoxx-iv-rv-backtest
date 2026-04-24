@@ -271,11 +271,10 @@ Generated data and figures are intentionally ignored by Git.
 │   └── scripts/
 └── tests/
 ```
-<<<<<<< HEAD
 ### Basic interpretation
 
 - In the current sample and with the current stylized assumptions, the strategy delivers a positive cumulative normalized payoff.
-- The Sharpe ratio (~0.75) is a descriptive statistic for this simplified payoff, not a live trading performance claim.
+- The Sharpe ratio is a descriptive statistic for this simplified payoff, not a live trading performance claim.
 - Most of the performance comes from the short-vol leg, which is consistent with the standard variance risk premium intuition: implied volatility tends to trade above realized volatility on average.
 - The long-vol leg is negative over the full sample in this run, while still acting differently during stressed volatility regimes.
 
@@ -302,23 +301,20 @@ It should be read as:
 What this repo already does reasonably well:
 
 - clean market data ingestion from two different sources,
-- proper volatility feature engineering (historical and forward RV),
+- proper volatility feature engineering,
+- explicit historical and forward RV conventions,
 - simple but structured signal generation,
 - reproducible backtest pipeline,
+- no-look-ahead tests,
+- robustness diagnostics,
 - useful visual diagnostics,
 - clear base for more advanced volatility or option strategies.
 
 ---
 
-## What this project is not
-
-This project is intentionally simple. It is not:
-=======
-
 ## What This Project Is Not
 
 This project is not:
->>>>>>> 02e593b (docs: clarify quant research scope and methodology)
 
 - a production trading engine,
 - a real options surface or calibration framework,
