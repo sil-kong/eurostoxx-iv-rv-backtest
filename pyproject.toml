@@ -34,6 +34,11 @@ eurostoxx-analyze-backtest = "eurostoxx_iv_rv_backtest.scripts.analyze_backtest:
 eurostoxx-run-robustness = "eurostoxx_iv_rv_backtest.scripts.run_robustness:main"
 eurostoxx-run-diagnostics = "eurostoxx_iv_rv_backtest.scripts.run_diagnostics:main"
 eurostoxx-generate-figures = "eurostoxx_iv_rv_backtest.scripts.generate_figures:main"
+eurostoxx-run-benchmarks = "eurostoxx_iv_rv_backtest.scripts.run_benchmarks:main"
+eurostoxx-run-walk-forward = "eurostoxx_iv_rv_backtest.scripts.run_walk_forward:main"
+eurostoxx-run-subperiods = "eurostoxx_iv_rv_backtest.scripts.run_subperiod_analysis:main"
+eurostoxx-run-cost-sensitivity = "eurostoxx_iv_rv_backtest.scripts.run_cost_sensitivity:main"
+eurostoxx-generate-report = "eurostoxx_iv_rv_backtest.scripts.generate_research_report:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

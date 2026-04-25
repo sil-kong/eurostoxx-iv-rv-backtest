@@ -1,3 +1,5 @@
+import argparse
+
 import pandas as pd
 
 from eurostoxx_iv_rv_backtest.analytics.performance import compute_summary_stats
@@ -5,6 +7,7 @@ from eurostoxx_iv_rv_backtest.config import OUTPUTS
 
 
 def main() -> None:
+    _parse_args()
     csv_path = OUTPUTS / "SXE50_iv_rv_varswap_backtest.csv"
     df = pd.read_csv(csv_path, parse_dates=["date"]).sort_values("date")
 
@@ -29,6 +32,11 @@ def main() -> None:
     print()
     print(f"PnL long vol  : {stats['long_vol_pnl']:.3f}")
     print(f"PnL short vol : {stats['short_vol_pnl']:.3f}")
+
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Print summary diagnostics for the daily backtest.")
+    return parser.parse_args()
 
 
 if __name__ == "__main__":

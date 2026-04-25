@@ -1,3 +1,5 @@
+import argparse
+
 import pandas as pd
 
 from eurostoxx_iv_rv_backtest.backtesting.non_overlapping_varswap import (
@@ -8,6 +10,7 @@ from eurostoxx_iv_rv_backtest.config import OUTPUTS
 
 def main() -> None:
     """Run the non-overlapping stylized 20-day variance payoff layer."""
+    _parse_args()
     input_path = OUTPUTS / "SXE50_with_IV_RV_daily_20y_with_signals.csv"
     output_path = OUTPUTS / "SXE50_iv_rv_non_overlapping_varswap_backtest.csv"
 
@@ -34,6 +37,13 @@ def main() -> None:
     print(f"\nNb trades non-overlapping : {len(trade_rows)}")
     print(f"Cumulative trade PnL      : {result['cumulative_trade_pnl'].iloc[-1]:.3f}")
     print(f"\nBacktest non-overlapping sauvegardé dans : {output_path}")
+
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Run the non-overlapping stylized variance-payoff layer."
+    )
+    return parser.parse_args()
 
 
 if __name__ == "__main__":

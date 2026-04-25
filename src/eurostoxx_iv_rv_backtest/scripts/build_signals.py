@@ -1,5 +1,7 @@
 # src/eurostoxx_iv_rv_backtest/scripts/build_signals.py
 
+import argparse
+
 import pandas as pd
 
 from eurostoxx_iv_rv_backtest.config import OUTPUTS
@@ -55,6 +57,7 @@ def main() -> None:
       outputs/SXE50_with_IV_RV_daily_20y_with_signals.csv
     """
 
+    _parse_args()
     input_path = OUTPUTS / "SXE50_with_IV_RV_daily_20y.csv"
     output_path = OUTPUTS / "SXE50_with_IV_RV_daily_20y_with_signals.csv"
 
@@ -112,6 +115,13 @@ def main() -> None:
 
     df.to_csv(output_path, index=False)
     print(f"\n✅ Fichier avec RV forward + signaux exporté dans : {output_path}")
+
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Build forward RV and no-look-ahead IV/RV signals."
+    )
+    return parser.parse_args()
 
 
 if __name__ == "__main__":

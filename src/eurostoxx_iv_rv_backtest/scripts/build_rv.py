@@ -1,5 +1,7 @@
 # src/eurostoxx_iv_rv_backtest/scripts/build_rv.py
 
+import argparse
+
 import pandas as pd
 from eurostoxx_iv_rv_backtest.config import DATA_RAW, OUTPUTS
 
@@ -7,6 +9,7 @@ from eurostoxx_iv_rv_backtest.features.realized_vol import add_realized_vol
 
 
 def main() -> None:
+    _parse_args()
     input_path = DATA_RAW / "SXE50_with_IV_daily_20y.csv"
     output_path = OUTPUTS / "SXE50_with_IV_RV_daily_20y.csv"
 
@@ -33,6 +36,11 @@ def main() -> None:
 
     df_rv.to_csv(output_path, index=False)
     print(f"\n✅ Fichier enrichi avec RV exporté dans : {output_path}")
+
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Build historical realized-volatility features.")
+    return parser.parse_args()
 
 
 if __name__ == "__main__":

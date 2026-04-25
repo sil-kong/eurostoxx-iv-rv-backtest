@@ -92,6 +92,59 @@ def plot_yearly_pnl(yearly: pd.DataFrame, output_path: Path) -> None:
     _save(fig, output_path)
 
 
+def plot_benchmark_equity_curves(df: pd.DataFrame, output_path: Path) -> None:
+    """Plot cumulative normalized PnL for signal and benchmark strategies."""
+    _require_columns(
+        df,
+        {"date", "iv_rv_signal", "always_short_vol", "always_long_vol", "always_flat"},
+    )
+    fig, ax = plt.subplots(figsize=(11, 5.5))
+    columns = ["iv_rv_signal", "always_short_vol", "always_long_vol", "always_flat"]
+    labels = {
+        "iv_rv_signal": "IV/RV signal",
+        "always_short_vol": "Always short vol",
+        "always_long_vol": "Always long vol",
+        "always_flat": "Flat",
+    }
+    for column in columns:
+        ax.plot(df["date"], df[column], linewidth=1.4, label=labels[column])
+    ax.axhline(0.0, color="black", linewidth=0.8, alpha=0.5)
+    ax.set_title("Benchmark equity curves")
+    ax.set_ylabel("Cumulative normalized PnL")
+    ax.set_xlabel("Date")
+    ax.grid(alpha=0.25)
+    ax.legend()
+    _save(fig, output_path)
+
+
+def plot_subperiod_performance(df: pd.DataFrame, output_path: Path) -> None:
+    """Plot total normalized PnL by named subperiod."""
+    _require_columns(df, {"subperiod", "total_pnl"})
+    fig, ax = plt.subplots(figsize=(11, 5.5))
+    colors = ["#1f77b4" if value >= 0 else "#d62728" for value in df["total_pnl"]]
+    ax.bar(df["subperiod"], df["total_pnl"], color=colors)
+    ax.axhline(0.0, color="black", linewidth=0.8)
+    ax.set_title("Subperiod stylized IV/RV payoff")
+    ax.set_ylabel("Normalized PnL")
+    ax.set_xlabel("Subperiod")
+    ax.tick_params(axis="x", rotation=30)
+    ax.grid(axis="y", alpha=0.25)
+    _save(fig, output_path)
+
+
+def plot_walk_forward_equity(df: pd.DataFrame, output_path: Path) -> None:
+    """Plot cumulative out-of-sample walk-forward equity."""
+    _require_columns(df, {"date", "walk_forward_equity"})
+    fig, ax = plt.subplots(figsize=(11, 5.5))
+    ax.plot(df["date"], df["walk_forward_equity"], color="#2ca02c", linewidth=1.6)
+    ax.axhline(0.0, color="black", linewidth=0.8, alpha=0.5)
+    ax.set_title("Walk-forward out-of-sample equity")
+    ax.set_ylabel("Cumulative normalized PnL")
+    ax.set_xlabel("Date")
+    ax.grid(alpha=0.25)
+    _save(fig, output_path)
+
+
 def plot_robustness(grid: pd.DataFrame, output_path: Path) -> None:
     """Plot the robustness Sharpe heatmap panels."""
     from eurostoxx_iv_rv_backtest.analytics.robustness import plot_robustness_heatmap

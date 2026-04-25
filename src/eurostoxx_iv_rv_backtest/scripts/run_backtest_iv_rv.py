@@ -1,5 +1,7 @@
 # src/eurostoxx_iv_rv_backtest/scripts/run_backtest_iv_rv.py
 
+import argparse
+
 import pandas as pd
 
 from eurostoxx_iv_rv_backtest.config import OUTPUTS
@@ -9,6 +11,7 @@ from eurostoxx_iv_rv_backtest.features.iv_rv_variance_swap import (
 
 
 def main() -> None:
+    _parse_args()
     csv_path = OUTPUTS / "SXE50_with_IV_RV_daily_20y_with_signals.csv"
     df = pd.read_csv(csv_path, parse_dates=["date"]).sort_values("date")
 
@@ -36,6 +39,13 @@ def main() -> None:
         .isna()
         .sum()
     )
+
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Run the daily stylized IV/RV variance-payoff diagnostic."
+    )
+    return parser.parse_args()
 
 
 if __name__ == "__main__":

@@ -101,6 +101,7 @@ def run_robustness_grid(
                         "annualized_mean": stats["annualized_mean"],
                         "annualized_vol": stats["annualized_vol"],
                         "sharpe": stats["sharpe"],
+                        "sharpe_approx": stats["sharpe_approx"],
                         "max_drawdown": stats["max_drawdown"],
                         "days_in_position": stats["days_in_position"],
                         "pct_in_market": stats["pct_in_market"],
@@ -148,3 +149,56 @@ def plot_robustness_heatmap(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
+
+
+def plot_robustness_metric_heatmap(
+    grid: pd.DataFrame,
+    output_path: Path,
+    metric: str,
+    horizon: int = 20,
+) -> None:
+    """Plot a single-horizon heatmap by z-entry and lookback for one metric."""
+    metric_col = "sharpe" if metric == "sharpe_approx" and "sharpe" in grid.columns else metric
+    required = {"horizon", "lookback", "z_entry", metric_col}
+    missing = required.difference(grid.columns)
+    if missing:
+        raise ValueError(f"Colonnes manquantes pour la heatmap: {sorted(missing)}")
+
+    subset = grid.loc[grid["horizon"].astype(int) == int(horizon)]
+    if subset.empty:
+        raise ValueError(f"No robustness rows found for horizon={horizon}.")
+
+    pivot = (
+        subset.pivot(index="lookback", columns="z_entry", values=metric_col)
+        .sort_index()
+        .sort_index(axis=1)
+    )
+    values = pivot.to_numpy(dtype=float)
+    finite_values = values[np.isfinite(values)]
+    vmin = float(finite_values.min()) if len(finite_values) else None
+    vmax = float(finite_values.max()) if len(finite_values) else None
+
+    fig, ax = plt.subplots(figsize=(7.2, 5.2))
+    image = ax.imshow(values, aspect="auto", vmin=vmin, vmax=vmax)
+    ax.set_title(f"{_metric_label(metric_col)} heatmap, horizon {int(horizon)}d")
+    ax.set_xlabel("z_entry")
+    ax.set_ylabel("lookback")
+    ax.set_xticks(range(len(pivot.columns)))
+    ax.set_xticklabels([f"{value:g}" for value in pivot.columns])
+    ax.set_yticks(range(len(pivot.index)))
+    ax.set_yticklabels([f"{int(value)}" for value in pivot.index])
+
+    for row_idx, lookback in enumerate(pivot.index):
+        for col_idx, z_entry in enumerate(pivot.columns):
+            value = pivot.loc[lookback, z_entry]
+            if pd.notna(value):
+                ax.text(col_idx, row_idx, f"{value:.2f}", ha="center", va="center", fontsize=8)
+
+    fig.colorbar(image, ax=ax, shrink=0.85)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+
+
+def _metric_label(metric: str) -> str:
+    return metric.replace("_", " ").title()

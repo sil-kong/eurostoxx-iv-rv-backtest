@@ -1,3 +1,5 @@
+import argparse
+
 import pandas as pd
 
 from eurostoxx_iv_rv_backtest.analytics.performance import (
@@ -19,6 +21,7 @@ CRISIS_PERIODS = {
 
 def main() -> None:
     """Export yearly, regime and drawdown diagnostics for the daily payoff layer."""
+    _parse_args()
     input_path = OUTPUTS / "SXE50_iv_rv_varswap_backtest.csv"
     yearly_path = OUTPUTS / "yearly_performance.csv"
     regime_path = OUTPUTS / "regime_performance.csv"
@@ -55,6 +58,13 @@ def main() -> None:
     print(yearly.tail())
     print("\nRegime performance:")
     print(regime)
+
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Export yearly, regime, drawdown and crisis diagnostics."
+    )
+    return parser.parse_args()
 
 
 def _compute_crisis_periods(df: pd.DataFrame) -> pd.DataFrame:
