@@ -54,10 +54,13 @@ def compute_summary_stats(
             "annualized_mean": np.nan,
             "annualized_vol": np.nan,
             "sharpe": np.nan,
+            "sharpe_approx": np.nan,
             "max_drawdown": np.nan,
             "nb_days": 0.0,
             "days_in_position": 0.0,
             "pct_in_market": np.nan,
+            "exposure_fraction": np.nan,
+            "hit_ratio": np.nan,
             "long_vol_pnl": 0.0,
             "short_vol_pnl": 0.0,
         }
@@ -69,16 +72,22 @@ def compute_summary_stats(
     sharpe = annualized_mean / annualized_vol if annualized_vol > 0 else np.nan
     nb_days = len(df)
     days_in_position = int((df["signal"] != 0).sum())
+    active_pnl = df.loc[df["signal"] != 0, "pnl"]
+    hit_ratio = float((active_pnl > 0).mean()) if len(active_pnl) else np.nan
+    exposure_fraction = days_in_position / nb_days if nb_days else np.nan
 
     return {
         "total_pnl": float(df["equity"].iloc[-1]),
         "annualized_mean": annualized_mean,
         "annualized_vol": annualized_vol,
         "sharpe": sharpe,
+        "sharpe_approx": sharpe,
         "max_drawdown": float(compute_drawdown(df["equity"], initial_equity).min()),
         "nb_days": float(nb_days),
         "days_in_position": float(days_in_position),
         "pct_in_market": 100.0 * days_in_position / nb_days,
+        "exposure_fraction": exposure_fraction,
+        "hit_ratio": hit_ratio,
         "long_vol_pnl": float(df.loc[df["signal"] == 1, "pnl"].sum()),
         "short_vol_pnl": float(df.loc[df["signal"] == -1, "pnl"].sum()),
     }
