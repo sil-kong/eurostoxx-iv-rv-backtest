@@ -65,3 +65,29 @@ def test_non_overlapping_varswap_applies_simple_trade_cost() -> None:
     )
 
     assert np.isclose(result.loc[2, "trade_pnl"], 0.30**2 - 0.20**2 - 0.01)
+
+
+def test_non_overlapping_entries_do_not_depend_on_future_payoff_magnitude() -> None:
+    df = pd.DataFrame(
+        {
+            "date": pd.date_range("2024-01-01", periods=8, freq="B"),
+            "iv": [0.20] * 8,
+            "rv_fwd_2d": [0.30, 0.10, 0.50, 0.20, 0.15, 0.40, np.nan, np.nan],
+            "signal_vol": [1, 1, -1, -1, 1, 1, 1, 1],
+        }
+    )
+    changed_payoff = df.copy()
+    changed_payoff["rv_fwd_2d"] = [0.80, 0.70, 0.60, 0.50, 0.40, 0.30, np.nan, np.nan]
+
+    result = backtest_non_overlapping_varswap(df, rv_fwd_col="rv_fwd_2d", horizon=2)
+    changed_result = backtest_non_overlapping_varswap(
+        changed_payoff,
+        rv_fwd_col="rv_fwd_2d",
+        horizon=2,
+    )
+
+    trade_cols = ["trade_id", "entry_date", "exit_date", "entry_signal"]
+    pd.testing.assert_frame_equal(
+        result.loc[result["trade_id"].notna(), trade_cols].reset_index(drop=True),
+        changed_result.loc[changed_result["trade_id"].notna(), trade_cols].reset_index(drop=True),
+    )
