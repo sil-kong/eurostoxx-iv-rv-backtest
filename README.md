@@ -1,204 +1,119 @@
 # eurostoxx-iv-rv-backtest
 
-Backtest of an implied vs realized volatility strategy on Euro STOXX 50
-(SX5E / VSTOXX), with a reproducible research pipeline, explicit
-no-look-ahead conventions, robustness diagnostics, and stylized variance-swap
-payoff analysis.
+A reproducible empirical volatility research pipeline studying whether the
+implied-realized volatility spread on Euro STOXX 50 contains information about
+future realized variance.
 
-This is a quant research project, not a production trading engine.
+The project combines SX5E spot data, VSTOXX implied-volatility proxy data,
+realized-volatility estimators, no-look-ahead IV/RV signals, stylized variance
+payoff diagnostics, benchmark strategies, non-overlapping trade simulation,
+robustness grids, walk-forward validation and research-grade reporting.
 
-## Project Pitch
+This is a quant research portfolio project, not a production trading engine or
+executable variance-swap strategy.
 
-The project studies whether a simple IV/RV signal on Euro STOXX 50 contains
-useful information about subsequent realized variance. It combines:
+## Research Question
 
-- SX5E spot data from Yahoo Finance,
-- VSTOXX / V2TX as a broad proxy for implied volatility,
-- historical realized volatility,
-- forward realized volatility for ex-post payoff evaluation,
-- a rolling IV/RV z-score signal,
-- stylized variance-swap payoff diagnostics,
-- Black-Scholes and option payoff utilities,
-- parameter robustness, yearly diagnostics and research figures.
+Does the IV/RV spread contain useful information about subsequent realized
+variance, or is the observed performance mostly explained by a naive
+short-volatility exposure?
 
-The goal is to be transparent and testable enough for a quant interview or
-junior research portfolio discussion, while staying honest about simplifications.
+## Recruiter Quick View
 
-## What The Project Does
+- Field: empirical volatility research / equity index derivatives / market risk
+- Data: SX5E / Euro STOXX 50 spot and VSTOXX implied-volatility proxy
+- Core modelling: realized volatility, forward realized volatility, IV/RV
+  spread, z-score signals, stylized variance payoff
+- Research discipline: no-look-ahead conventions, non-overlapping trades,
+  benchmarks, walk-forward validation, robustness grids, subperiod diagnostics
+- Engineering: Python package, CLI scripts, pytest suite, ruff, reproducible CSV
+  outputs, Markdown report and figures
+- Scope: research-grade diagnostic framework; not a production trading engine
 
-The pipeline:
+## What This Project Tests
 
-1. downloads and cleans SX5E and VSTOXX data,
-2. builds historical RV features,
-3. builds strictly future forward RV for ex-post evaluation,
-4. constructs an IV/RV z-score signal,
-5. runs a daily stylized variance payoff,
-6. runs a more conservative non-overlapping 20-day payoff layer,
-7. exports performance, robustness and regime diagnostics,
-8. generates research figures.
+The project tests whether an IV/RV signal is aligned with subsequent realized
+variance. It does not prove tradable alpha, executable trading performance or
+desk-level variance-swap pricing.
 
-## What Is Quant-Grade About It
+The benchmark layer compares the IV/RV signal against naive
+variance-risk-premium exposures: always short volatility, always long volatility
+and flat.
+This is the key discipline check: if always-short-vol dominates, the report says
+so.
 
-- Explicit time conventions and no-look-ahead tests.
-- Reusable analytics instead of duplicated script logic.
-- Unit tests for volatility features, signals, payoff conventions, options and
-  performance statistics.
-- Parameter sensitivity analysis across thresholds, lookbacks and horizons.
-- Clear limitations: no option chain, no volatility surface, no desk-level
-  variance-swap valuation and no execution model.
-- Standard Python packaging with editable installation and `python -m` commands.
+| Layer | Naive backtest | This repository |
+|---|---:|---:|
+| Data pipeline | partial | yes |
+| Explicit no-look-ahead policy | no | yes |
+| Forward RV separated from signal | no | yes |
+| Non-overlapping trades | no | yes |
+| Always-short-vol benchmark | no | yes |
+| Walk-forward validation | no | yes |
+| Subperiod/regime diagnostics | limited | yes |
+| Cost sensitivity | no | yes |
+| Research report | no | yes |
+
+## Sample Outputs
+
+Selected figures can be published to `docs/figures/` with:
+
+```bash
+eurostoxx-generate-figures --publish-docs-figures
+```
+
+![Equity curve](docs/figures/equity_curve.png)
+
+![Benchmark equity curves](docs/figures/benchmark_equity_curves.png)
+
+![Robustness heatmap](docs/figures/robustness_heatmap.png)
+
+## Results Snapshot
+
+The numbers below are generated from the current local sample. They are
+normalized diagnostics, not returns, EUR PnL, live trading results or desk-level
+variance-swap marks.
+
+| Layer | total_pnl | sharpe_approx | max_drawdown | days_in_position |
+|---|---:|---:|---:|---:|
+| Daily IV/RV signal | 8.222 | 0.753 | -4.784 | 2,227 |
+| Non-overlap signal | 0.474 | n/a | n/a | 164 trades |
+| Always short vol benchmark | 47.830 | 2.789 | -11.394 | 4,705 |
+| Always long vol benchmark | -47.830 | -2.789 | -55.737 | 4,705 |
+| Flat | 0.000 | n/a | 0.000 | 0 |
+
+For the full generated table and interpretation, run:
+
+```bash
+eurostoxx-generate-report
+```
+
+## Key Interpretation
+
+The generated report focuses on four questions:
+
+- Does IV/RV outperform always-short-vol, or is the result mostly naive VRP?
+- Is performance concentrated in the short-vol leg?
+- How stable is the behavior across subperiods and crisis windows?
+- How sensitive are results to stylized signal-change costs?
+
+The project is intentionally honest: weak walk-forward results, benchmark
+dominance or crisis concentration are reported directly rather than buried.
 
 ## Methodology
 
-Daily log returns are defined as:
+The methodology is documented in
+[docs/research_methodology.md](docs/research_methodology.md), including:
 
-$$
-r_t = \ln\left(\frac{S_t}{S_{t-1}}\right)
-$$
-
-Historical realized volatility over a window \(w\) is:
-
-$$
-RV_{w,t} = \mathrm{std}(r_{t-w+1}, \ldots, r_t)\sqrt{252}
-$$
-
-The signal uses the IV/RV spread:
-
-$$
-s_t = IV_t - RV_{w,t}
-$$
-
-and a rolling z-score:
-
-$$
-z_t = \frac{s_t - \mu_t}{\sigma_t}
-$$
-
-Default rule:
-
-- `signal_vol = -1` if `z > z_entry` -> short volatility bias,
-- `signal_vol = +1` if `z < -z_entry` -> long volatility bias,
-- `signal_vol = 0` otherwise.
-
-## Data Sources
-
-Spot:
-
-- Yahoo Finance ticker `^STOXX50E`
-- daily OHLCV fields
-
-Implied volatility:
-
-- STOXX historical V2TX text file
-- `iv = vstoxx_close / 100`
-
-VSTOXX is used as a broad implied-volatility proxy. It is not treated as a full
-option surface and does not provide strike or expiry dimensions.
-
-## No-Look-Ahead Policy
-
-At date \(t\):
-
-- the signal uses only data available at \(t\),
-- `rv_20d_t` may use returns up to and including \(t\), observable after close,
-- `rv_fwd_20d_t` uses strictly future returns from \(t+1\) to \(t+20\),
-- `rv_fwd_*` is only for ex-post payoff evaluation,
-- `signal_vol_t` must not use `rv_fwd_*`.
-
-Dedicated tests verify that changing future IV/RV or forward RV does not change
-the signal at \(t\), and that missing forward RV produces controlled payoff
-behavior.
-
-## Backtest Layers
-
-### 1. Daily Diagnostic Stylized Payoff
-
-The daily diagnostic payoff is:
-
-$$
-PnL_t = signal_t \cdot (RV_{fwd,t}^2 - IV_t^2)
-$$
-
-It is normalized, fee-free by default, and useful for studying signal alignment
-with future realized variance. It is not a realistic daily mark-to-market of a
-live product.
-
-A simplified `cost_per_signal_change` parameter is available for sensitivity
-checks. It is charged per unit of absolute signal change, e.g. `0 -> +1` costs
-one unit and `+1 -> -1` costs two units, only on rows with valid IV and forward
-RV. It is a placeholder friction model, not a bid/ask or execution simulator.
-
-### 2. Non-Overlapping 20-Day Stylized Variance Trade
-
-The non-overlapping layer opens at most one trade at a time:
-
-- if `signal_vol_t != 0`, open a trade at \(t\),
-- hold for exactly 20 trading rows,
-- do not open another trade until maturity,
-- book payoff at maturity,
-- use the same stylized variance payoff convention.
-
-This is more conservative than the daily diagnostic layer because it avoids
-implicitly opening a new overlapping trade every day.
-
-## Results
-
-Current daily diagnostic run on the local sample:
-
-```text
-Total PnL       : 8.222
-Annualized mean : 0.4379
-Annualized vol  : 0.5812
-Sharpe approx   : 0.75
-Max drawdown    : -4.784
-Days in position: 2227 / 4731 (47.1%)
-Long-vol PnL    : -5.993
-Short-vol PnL   : 14.214
-```
-
-Current non-overlapping 20-day run:
-
-```text
-Trades          : 164
-Cumulative PnL : 0.474
-```
-
-These are normalized research diagnostics. They are not EUR PnL, portfolio
-returns, live trading results or desk-level variance-swap marks.
-
-## Robustness Analysis
-
-The robustness script runs a grid over:
-
-- `z_entry`: 0.5, 1.0, 1.5, 2.0
-- `lookback`: 63, 126, 252, 504
-- `rv_window / forward horizon`: 10, 20, 30
-
-For each combination it exports:
-
-- total PnL,
-- annualized mean and volatility,
-- approximate Sharpe,
-- max drawdown,
-- days in position,
-- long-vol and short-vol PnL.
-
-The purpose is sensitivity analysis, not parameter optimization. The grid is
-intended to show whether the signal remains broadly stable across reasonable
-assumptions, not to cherry-pick the highest Sharpe.
-
-## Options Pricing Extension
-
-The `options/` package contains:
-
-- European Black-Scholes call and put prices,
-- delta, gamma, vega and annual theta,
-- implied volatility inversion by bisection,
-- call, put and straddle expiry payoffs,
-- a simplified ATM straddle expiry PnL helper.
-
-This connects the IV/RV research idea to option pricing mechanics, but it still
-does not use real option chains, bid/ask quotes or volatility-surface dynamics.
+- data sources and time alignment,
+- historical RV and forward RV definitions,
+- no-look-ahead conventions,
+- IV/RV signal construction,
+- stylized payoff convention,
+- benchmark definitions,
+- walk-forward validation,
+- robustness grid,
+- cost model and limitations.
 
 ## How To Run
 
@@ -208,135 +123,94 @@ Install in editable mode:
 python -m pip install -e ".[dev]"
 ```
 
-Build the full local pipeline:
+Full local research workflow:
 
 ```bash
-python -m eurostoxx_iv_rv_backtest.scripts.getdata
-python -m eurostoxx_iv_rv_backtest.scripts.build_rv
-python -m eurostoxx_iv_rv_backtest.scripts.build_signals
-python -m eurostoxx_iv_rv_backtest.scripts.run_backtest_iv_rv
-python -m eurostoxx_iv_rv_backtest.scripts.run_non_overlapping_varswap
-python -m eurostoxx_iv_rv_backtest.scripts.analyze_backtest
-python -m eurostoxx_iv_rv_backtest.scripts.run_diagnostics
-python -m eurostoxx_iv_rv_backtest.scripts.run_robustness
-python -m eurostoxx_iv_rv_backtest.scripts.generate_figures
+eurostoxx-build-raw-data
+eurostoxx-build-rv
+eurostoxx-build-signals
+eurostoxx-run-varswap-backtest
+eurostoxx-run-non-overlap-varswap
+eurostoxx-run-benchmarks
+eurostoxx-run-walk-forward
+eurostoxx-run-subperiods
+eurostoxx-run-cost-sensitivity
+eurostoxx-run-robustness
+eurostoxx-run-diagnostics
+eurostoxx-generate-figures --publish-docs-figures
+eurostoxx-generate-report
 ```
 
-Run tests and quality checks:
+The repository is usable offline after the raw market data has been downloaded.
+Tests do not require live internet.
+
+Run quality checks:
 
 ```bash
 python -m pytest
-python -m compileall src
 python -m ruff check .
-```
-
-The historical wrapper still works after editable installation:
-
-```bash
-python data/raw/getdata.py --help
+python -m compileall src
 ```
 
 ## Outputs
 
-Main generated files:
+Main generated research files:
 
-- `data/raw/SXE50_with_IV_daily_20y.csv`
 - `outputs/SXE50_with_IV_RV_daily_20y.csv`
 - `outputs/SXE50_with_IV_RV_daily_20y_with_signals.csv`
 - `outputs/SXE50_iv_rv_varswap_backtest.csv`
 - `outputs/SXE50_iv_rv_non_overlapping_varswap_backtest.csv`
-- `outputs/yearly_performance.csv`
-- `outputs/regime_performance.csv`
-- `outputs/drawdown_periods.csv`
-- `outputs/crisis_periods.csv`
+- `outputs/benchmark_comparison.csv`
+- `outputs/benchmark_equity_curves.csv`
+- `outputs/walk_forward_results.csv`
+- `outputs/walk_forward_selected_params.csv`
+- `outputs/walk_forward_equity.csv`
+- `outputs/subperiod_performance.csv`
+- `outputs/cost_sensitivity.csv`
 - `outputs/robustness_grid.csv`
-- `outputs/figures/*.png`
+- `outputs/research_report.md`
+- `docs/research_report.md`
+- `docs/figures/*.png`
 
-Generated data and figures are intentionally ignored by Git.
+Generated raw data and full output directories are intentionally ignored by Git.
+Only curated documentation artifacts belong in `docs/`.
+
+## Professional Limitations
+
+This project is strong as an empirical research diagnostic, but it is not:
+
+- a tradable variance swap backtester;
+- an option-chain backtester;
+- a volatility surface model;
+- a transaction-cost-aware execution simulator;
+- a broker-ready trading system.
+
+Additional limitations:
+
+- VSTOXX is a broad implied-volatility proxy, not a full options surface.
+- The payoff is stylized and normalized.
+- No bid/ask, slippage, liquidity, financing, margin or funding constraints are
+  modeled.
+- Non-overlapping trades remain simplified hold-to-expiry diagnostics.
+- Robustness grids are sensitivity checks, not a license to tune parameters.
 
 ## Repository Structure
 
 ```text
 .
-├── data/raw/getdata.py
+├── data/raw/
 ├── docs/
+│   ├── figures/
+│   ├── research_methodology.md
+│   └── research_report.md
 ├── outputs/
-│   └── figures/
 ├── src/eurostoxx_iv_rv_backtest/
 │   ├── analytics/
 │   ├── backtesting/
 │   ├── data/
 │   ├── features/
 │   ├── options/
-│   └── scripts/
+│   ├── scripts/
+│   └── validation/
 └── tests/
 ```
-### Basic interpretation
-
-- In the current sample and with the current stylized assumptions, the strategy delivers a positive cumulative normalized payoff.
-- The Sharpe ratio is a descriptive statistic for this simplified payoff, not a live trading performance claim.
-- Most of the performance comes from the short-vol leg, which is consistent with the standard variance risk premium intuition: implied volatility tends to trade above realized volatility on average.
-- The long-vol leg is negative over the full sample in this run, while still acting differently during stressed volatility regimes.
-
-### About the equity curve
-
-The equity curve is the cumulative sum of the daily stylized payoff.
-
-It should **not** be interpreted as:
-
-- a return in %,
-- a monetary PnL in EUR,
-- a fully realistic desk PnL.
-
-It should be read as:
-
-- a normalized cumulative payoff,
-- with `notional = 1`,
-- useful to compare signal quality through time and across regimes.
-
----
-
-## Strengths of the project
-
-What this repo already does reasonably well:
-
-- clean market data ingestion from two different sources,
-- proper volatility feature engineering,
-- explicit historical and forward RV conventions,
-- simple but structured signal generation,
-- reproducible backtest pipeline,
-- no-look-ahead tests,
-- robustness diagnostics,
-- useful visual diagnostics,
-- clear base for more advanced volatility or option strategies.
-
----
-
-## What This Project Is Not
-
-This project is not:
-
-- a production trading engine,
-- a real options surface or calibration framework,
-- an options-chain backtest,
-- an order-book or execution simulator,
-- a transaction-cost-aware portfolio system,
-- a live variance-swap book,
-- desk-level variance-swap valuation.
-
-## Limitations
-
-- VSTOXX is a broad proxy for implied volatility, not a full surface.
-- The payoff is stylized and normalized.
-- No bid/ask, slippage, financing, margin or liquidity constraints are modeled.
-- The non-overlapping backtest is still a simplified hold-to-expiry diagnostic.
-- The options layer is educational and Black-Scholes based.
-- Robustness grids are sensitivity checks, not a license to tune parameters.
-
-## Future Extensions
-
-- Add an overlapping variance trade book with explicit maturity ladders.
-- Add a carefully documented delta-hedged straddle experiment.
-- Add bootstrap or subperiod stability analysis.
-- Add richer drawdown and crisis-period attribution.
-- Add optional notebooks or a short report generated from the CSV outputs.
