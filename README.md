@@ -42,17 +42,20 @@ and flat.
 This is the key discipline check: if always-short-vol dominates, the report says
 so.
 
-| Layer | Naive backtest | This repository |
-|---|---:|---:|
-| Data pipeline | partial | yes |
-| Explicit no-look-ahead policy | no | yes |
-| Forward RV separated from signal | no | yes |
-| Non-overlapping trades | no | yes |
-| Always-short-vol benchmark | no | yes |
-| Walk-forward validation | no | yes |
-| Subperiod/regime diagnostics | limited | yes |
-| Cost sensitivity | no | yes |
-| Research report | no | yes |
+## Research Safeguards
+
+The repository includes the following methodological safeguards:
+
+| Safeguard | Included |
+|---|---:|
+| Explicit no-look-ahead policy | yes |
+| Forward realized volatility separated from signal construction | yes |
+| Always-short-vol, always-long-vol and flat benchmarks | yes |
+| Non-overlapping trade diagnostics | yes |
+| Walk-forward validation | yes |
+| Subperiod and regime diagnostics | yes |
+| Stylized cost sensitivity analysis | yes |
+| Reproducible research report | yes |
 
 ## Sample Outputs
 
