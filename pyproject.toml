@@ -9,7 +9,7 @@ description = "Euro STOXX 50 implied-vs-realized volatility research pipeline wi
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-authors = [{ name = "Sil Kong" }]
+authors = [{ name = "Mathieu Jacquet" }]
 dependencies = [
     "numpy",
     "pandas",
