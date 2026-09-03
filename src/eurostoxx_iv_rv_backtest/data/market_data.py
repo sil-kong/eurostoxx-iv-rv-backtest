@@ -5,9 +5,9 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Sequence
+from urllib.request import Request, urlopen
 
 import pandas as pd
-import requests
 import yfinance as yf
 
 
@@ -98,14 +98,29 @@ def fetch_vstoxx_data(
     raw_txt_path = output_dir / "h_v2tx.txt"
 
     if force_download or not raw_txt_path.exists():
-        response = requests.get(url, timeout=timeout)
-        response.raise_for_status()
-        raw_txt_path.write_text(response.text, encoding="utf-8")
+        raw_txt_path.write_text(_download_text(url, timeout=timeout), encoding="utf-8")
         print(f"[RAW] V2TX txt saved to: {raw_txt_path.resolve()}")
     else:
         print(f"[RAW] Reusing cached V2TX txt: {raw_txt_path.resolve()}")
 
     return pd.read_csv(raw_txt_path, sep=";")
+
+
+def _download_text(url: str, timeout: int) -> str:
+    """Download a public text file using Python's verified TLS context.
+
+    STOXX's public historical-data endpoint can expose a certificate chain that
+    is accepted by the operating-system trust store but rejected by the CA
+    bundle shipped with some versions of ``requests``. ``urllib`` uses Python's
+    platform TLS configuration and avoids disabling certificate verification.
+    """
+    request = Request(
+        url,
+        headers={"User-Agent": "eurostoxx-iv-rv-backtest/0.1"},
+    )
+    with urlopen(request, timeout=timeout) as response:
+        charset = response.headers.get_content_charset() or "utf-8"
+        return response.read().decode(charset)
 
 
 def clean_sx5e_data(df_raw: pd.DataFrame) -> pd.DataFrame:

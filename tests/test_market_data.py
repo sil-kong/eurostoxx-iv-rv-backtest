@@ -6,6 +6,7 @@ import pytest
 from eurostoxx_iv_rv_backtest.data.market_data import (
     clean_sx5e_data,
     clean_vstoxx_data,
+    fetch_vstoxx_data,
     merge_spot_and_iv,
     resolve_date_range,
 )
@@ -82,6 +83,37 @@ def test_clean_vstoxx_data_rejects_files_without_v2tx_symbol() -> None:
 
     with pytest.raises(RuntimeError, match="Aucune ligne V2TX"):
         clean_vstoxx_data(raw)
+
+
+def test_fetch_vstoxx_data_downloads_then_reuses_cache(monkeypatch, tmp_path) -> None:
+    csv_text = "Date;Symbol;Indexvalue\n02.01.2024;V2TX;20.0\n"
+    downloads = []
+
+    def fake_download(url: str, timeout: int) -> str:
+        downloads.append((url, timeout))
+        return csv_text
+
+    monkeypatch.setattr(
+        "eurostoxx_iv_rv_backtest.data.market_data._download_text",
+        fake_download,
+    )
+
+    downloaded = fetch_vstoxx_data(
+        tmp_path,
+        url="https://example.test/vstoxx.txt",
+        force_download=True,
+        timeout=12,
+    )
+    cached = fetch_vstoxx_data(
+        tmp_path,
+        url="https://example.test/vstoxx.txt",
+        force_download=False,
+        timeout=12,
+    )
+
+    assert downloads == [("https://example.test/vstoxx.txt", 12)]
+    pd.testing.assert_frame_equal(downloaded, cached)
+    assert downloaded.loc[0, "Indexvalue"] == 20.0
 
 
 def test_merge_spot_and_iv_left_joins_and_checks_missing_ratio() -> None:
