@@ -77,13 +77,23 @@ The numbers below are generated from the current local sample. They are
 normalized diagnostics, not returns, EUR PnL, live trading results or desk-level
 variance-swap marks.
 
-| Layer | total_pnl | sharpe_approx | max_drawdown | days_in_position |
-|---|---:|---:|---:|---:|
-| Daily IV/RV signal | 8.222 | 0.753 | -4.784 | 2,227 |
-| Non-overlap signal | 0.474 | n/a | n/a | 164 trades |
-| Always short vol benchmark | 47.830 | 2.789 | -11.394 | 4,705 |
-| Always long vol benchmark | -47.830 | -2.789 | -55.737 | 4,705 |
-| Flat | 0.000 | n/a | 0.000 | 0 |
+| Layer | total_pnl | sharpe_approx | sharpe_non_overlap | max_drawdown | days_in_position |
+|---|---:|---:|---:|---:|---:|
+| Daily IV/RV signal | 12.722 | 0.831 | 0.197 | -4.906 | 2,730 |
+| Non-overlap signal | 1.239 | n/a | n/a | n/a | 203 trades |
+| Always short vol benchmark | 48.371 | 2.802 | 0.650 | -11.394 | 4,643 |
+| Always long vol benchmark | -48.371 | -2.802 | -0.650 | -58.676 | 4,643 |
+| Flat | 0.000 | n/a | n/a | 0.000 | 0 |
+
+Sample: SX5E/VSTOXX daily data, 2007-03-30 to 2026-11-24. All strategies are
+evaluated on the same sample, i.e. the dates where the IV/RV z-score is defined.
+
+`sharpe_approx` annualizes each row's overlapping 20-day payoff as if it were an
+independent daily return, which strongly inflates it. `sharpe_non_overlap`
+samples one payoff every 20 trading days and is the number to quote. On that
+basis the IV/RV signal (about 0.2) does not beat a naive always-short-vol
+exposure (about 0.65): most of the edge is the variance risk premium, and the
+long-vol leg loses money on average.
 
 For the full generated table and interpretation, run:
 

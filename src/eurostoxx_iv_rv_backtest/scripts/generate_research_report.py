@@ -181,9 +181,18 @@ def _benchmark_section(benchmark: pd.DataFrame | None) -> str:
         return "Benchmark comparison unavailable. Run `eurostoxx-run-benchmarks`."
 
     columns = ["strategy", "total_pnl", "sharpe_approx", "max_drawdown", "days_in_position"]
+    note = ""
+    if "sharpe_non_overlap" in benchmark.columns:
+        columns.insert(3, "sharpe_non_overlap")
+        note = (
+            "\n\n`sharpe_approx` annualizes overlapping multi-day payoffs as if they were "
+            "independent daily returns and is inflated. `sharpe_non_overlap` samples one "
+            "payoff per horizon and is the more honest risk-adjusted comparison. All "
+            "strategies are evaluated on the sample where the IV/RV signal is defined."
+        )
     text = _markdown_table(benchmark.to_dict("records"), columns)
     conclusion = _benchmark_conclusion(benchmark)
-    return f"{text}\n\n{conclusion}"
+    return f"{text}{note}\n\n{conclusion}"
 
 
 def _walk_forward_section(

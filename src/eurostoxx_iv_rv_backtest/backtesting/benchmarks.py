@@ -64,9 +64,23 @@ def run_benchmark_backtests(
     rv_fwd_col: str = "rv_fwd_20d",
     signal_col: str = "signal_vol",
     trading_days_per_year: int = 252,
+    eligible_col: str | None = "iv_rv_zscore",
+    horizon: int = 20,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Compare the IV/RV signal with simple variance-risk-premium benchmarks.
+
+    All strategies are evaluated on the same sample. When ``eligible_col`` is
+    present in ``df`` (by default the z-score), the benchmarks are only active
+    on rows where that column is defined, i.e. where the IV/RV signal itself
+    could have taken a position. Otherwise a benchmark would be credited with
+    periods (e.g. the signal warm-up) that the signal never had access to.
+
+    ``horizon`` is the payoff horizon in trading days. It is used for
+    ``sharpe_non_overlap``, computed on payoffs sampled every ``horizon`` rows
+    and annualized with ``sqrt(trading_days_per_year / horizon)``. The daily
+    ``sharpe_approx`` treats overlapping ``horizon``-day payoffs as independent
+    daily returns and is therefore strongly inflated.
 
     Returns:
         comparison: one row per strategy with summary diagnostics.
@@ -78,10 +92,14 @@ def run_benchmark_backtests(
     work = df.copy().sort_values(date_col).reset_index(drop=True)
     work[date_col] = pd.to_datetime(work[date_col])
 
+    eligible = pd.Series(True, index=work.index)
+    if eligible_col is not None and eligible_col in work.columns:
+        eligible = work[eligible_col].notna()
+
     strategies: Mapping[str, pd.Series] = {
         "iv_rv_signal": work[signal_col].fillna(0).astype(float),
-        "always_short_vol": always_short_vol(work, iv_col, rv_fwd_col),
-        "always_long_vol": always_long_vol(work, iv_col, rv_fwd_col),
+        "always_short_vol": always_short_vol(work, iv_col, rv_fwd_col).where(eligible, 0),
+        "always_long_vol": always_long_vol(work, iv_col, rv_fwd_col).where(eligible, 0),
         "always_flat": always_flat(work),
     }
 
@@ -107,6 +125,8 @@ def run_benchmark_backtests(
                 equity_col="equity_varswap",
                 signal_col="_benchmark_signal",
                 trading_days_per_year=trading_days_per_year,
+                horizon=horizon,
+                sample_mask=eligible,
             )
         )
         equity_curves[strategy] = bt["equity_varswap"]
@@ -122,6 +142,8 @@ def summarize_benchmark_result(
     equity_col: str = "equity_varswap",
     signal_col: str = "signal_vol",
     trading_days_per_year: int = 252,
+    horizon: int = 20,
+    sample_mask: pd.Series | None = None,
 ) -> dict[str, float | str]:
     """Summarize one stylized payoff series in research-report-friendly columns."""
     _require_columns(df, {date_col, pnl_col, equity_col, signal_col})
@@ -141,6 +163,12 @@ def summarize_benchmark_result(
         "annualized_mean": stats["annualized_mean"],
         "annualized_vol": stats["annualized_vol"],
         "sharpe_approx": stats["sharpe_approx"],
+        "sharpe_non_overlap": non_overlap_sharpe(
+            df[pnl_col],
+            horizon=horizon,
+            trading_days_per_year=trading_days_per_year,
+            sample_mask=sample_mask,
+        ),
         "max_drawdown": stats["max_drawdown"],
         "hit_ratio": stats["hit_ratio"],
         "days_in_position": stats["days_in_position"],
@@ -150,6 +178,40 @@ def summarize_benchmark_result(
         "long_vol_pnl": stats["long_vol_pnl"],
         "short_vol_pnl": stats["short_vol_pnl"],
     }
+
+
+def non_overlap_sharpe(
+    pnl: pd.Series,
+    horizon: int = 20,
+    trading_days_per_year: int = 252,
+    sample_mask: pd.Series | None = None,
+) -> float:
+    """
+    Sharpe of ``horizon``-day payoffs sampled without overlap.
+
+    Each daily row of the stylized payoff is a full ``horizon``-day variance
+    payoff, so consecutive rows overlap by ``horizon - 1`` days. Sampling every
+    ``horizon`` rows gives approximately independent observations, which are
+    annualized with ``sqrt(trading_days_per_year / horizon)``. The estimate is
+    averaged over all ``horizon`` possible sampling offsets so that it does not
+    depend on an arbitrary start date. Flat rows count as zero payoff.
+    """
+    if horizon <= 0:
+        raise ValueError("horizon must be positive.")
+    values = pnl.fillna(0.0).astype(float)
+    if sample_mask is not None:
+        values = values.loc[sample_mask.to_numpy()]
+    values = values.reset_index(drop=True)
+
+    sharpes: list[float] = []
+    for offset in range(min(horizon, len(values))):
+        sample = values.iloc[offset::horizon]
+        std = float(sample.std(ddof=1)) if len(sample) > 1 else np.nan
+        if np.isfinite(std) and std > 0:
+            sharpes.append(float(sample.mean()) / std)
+    if not sharpes:
+        return np.nan
+    return float(np.mean(sharpes) * np.sqrt(trading_days_per_year / horizon))
 
 
 def _yearly_pnl(df: pd.DataFrame, date_col: str, pnl_col: str) -> pd.Series:

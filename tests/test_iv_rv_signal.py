@@ -1,3 +1,4 @@
+import pytest
 import numpy as np
 import pandas as pd
 
@@ -75,3 +76,27 @@ def test_add_iv_rv_signal_applies_zscore_threshold_rule() -> None:
     assert result.loc[3, "signal_vol"] == -1
     assert np.isclose(result.loc[4, "iv_rv_zscore"], -0.7071067811865475)
     assert result.loc[4, "signal_vol"] == 1
+
+
+def test_isolated_missing_iv_does_not_disable_signal_for_whole_lookback() -> None:
+    rng = np.random.default_rng(0)
+    n = 60
+    df = pd.DataFrame({"iv": 0.20 + 0.02 * rng.standard_normal(n), "rv_20d": 0.18})
+    df.loc[30, "iv"] = np.nan
+
+    result = add_iv_rv_signal(df, lookback=40, z_entry=0.5)
+
+    # Missing date itself stays undefined and flat.
+    assert np.isnan(result.loc[30, "iv_rv_zscore"])
+    assert result.loc[30, "signal_vol"] == 0
+    # Dates after the gap keep a valid z-score (95% of the window is enough).
+    assert result.loc[45:, "iv_rv_zscore"].notna().all()
+    # Strict mode reproduces the old behaviour.
+    strict = add_iv_rv_signal(df, lookback=40, z_entry=0.5, min_periods=40)
+    assert strict.loc[45:69, "iv_rv_zscore"].isna().all()
+
+
+def test_add_iv_rv_signal_rejects_invalid_min_periods() -> None:
+    df = pd.DataFrame({"iv": [0.2, 0.3, 0.1], "rv_20d": [0.2, 0.2, 0.2]})
+    with pytest.raises(ValueError):
+        add_iv_rv_signal(df, lookback=3, min_periods=4)

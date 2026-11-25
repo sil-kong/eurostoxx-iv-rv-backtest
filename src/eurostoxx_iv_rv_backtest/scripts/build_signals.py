@@ -1,6 +1,7 @@
 # src/eurostoxx_iv_rv_backtest/scripts/build_signals.py
 
 import argparse
+import math
 
 import pandas as pd
 
@@ -14,6 +15,7 @@ def add_iv_rv_signal(
     rv_col: str = "rv_20d",
     lookback: int = 252,
     z_entry: float = 0.5,
+    min_periods: int | None = None,
 ) -> pd.DataFrame:
     """
     Ajoute :
@@ -23,19 +25,32 @@ def add_iv_rv_signal(
           +1 = long vol (IV sous-évalue la RV)
           -1 = short vol (IV surévalue la RV)
            0 = neutre (écart limité)
+
+    ``min_periods`` is the minimum number of valid spreads required inside the
+    rolling window. It defaults to 95% of ``lookback`` so that an isolated
+    missing IV print (e.g. VSTOXX not published on 24/31 December) does not
+    invalidate the z-score for the following ``lookback`` days. The z-score at a
+    date with missing IV or RV stays NaN and the signal is flat on that date.
     """
 
     df = df.copy()
 
     if iv_col not in df.columns or rv_col not in df.columns:
         raise ValueError("Colonnes IV/RV manquantes pour le signal.")
+    if lookback < 2:
+        raise ValueError("lookback doit être >= 2.")
+    if min_periods is None:
+        min_periods = max(2, math.ceil(0.95 * lookback))
+    if not 2 <= min_periods <= lookback:
+        raise ValueError("min_periods doit être compris entre 2 et lookback.")
 
     # Écart IV - RV (en vol annualisée)
     df["iv_minus_rv"] = df[iv_col] - df[rv_col]
 
     # Stats glissantes sur l'écart
-    rolling_mean = df["iv_minus_rv"].rolling(lookback).mean()
-    rolling_std = df["iv_minus_rv"].rolling(lookback).std()
+    rolling = df["iv_minus_rv"].rolling(lookback, min_periods=min_periods)
+    rolling_mean = rolling.mean()
+    rolling_std = rolling.std()
 
     df["iv_rv_zscore"] = (df["iv_minus_rv"] - rolling_mean) / rolling_std
 
